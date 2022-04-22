@@ -12,8 +12,9 @@ module Level04.DB
 
 import           Data.Text                          (Text)
 import qualified Data.Text                          as Text
+import Data.Either.Combinators
 
-import           Data.Time                          (getCurrentTime)
+import           Data.Time                          (getCurrentTime, UTCTime)
 
 import           Database.SQLite.Simple             (Connection, Query (Query))
 import qualified Database.SQLite.Simple             as Sql
@@ -22,7 +23,11 @@ import qualified Database.SQLite.SimpleErrors       as Sql
 import           Database.SQLite.SimpleErrors.Types (SQLiteResponse)
 
 import           Level04.Types                      (Comment, CommentText,
-                                                     Error, Topic)
+                                                     Error, Topic, fromDBComment, getCommentText, mkTopic)
+import Level04.DB.Types (DBComment(DBComment))
+import Level04.Types.Topic (getTopic, Topic)
+import Level04.Types.Error (Error(DbError))
+import Data.Bifunctor (Bifunctor(first))
 
 -- ------------------------------------------------------------------------------|
 -- You'll need the documentation for sqlite-simple & sqlite-simple-errors handy! |
@@ -43,8 +48,7 @@ data FirstAppDB = FirstAppDB
 closeDB
   :: FirstAppDB
   -> IO ()
-closeDB =
-  error "closeDB not implemented"
+closeDB firstAppDb = Sql.close $ dbConn firstAppDb -- where is close from?
 
 -- Given a `FilePath` to our SQLite DB file, initialise the database and ensure
 -- our Table is there by running a query to create it, if it doesn't exist
@@ -52,8 +56,12 @@ closeDB =
 initDB
   :: FilePath
   -> IO ( Either SQLiteResponse FirstAppDB )
-initDB fp =
-  error "initDB not implemented (use Sql.runDBAction to catch exceptions)"
+initDB fp = do
+  -- exists <- File.fileExist fp
+  conn <- Sql.open fp
+  errorOrUnit <- Sql.runDBAction (Sql.execute_ conn createTableQ)
+  pure $ fmap (\_ -> FirstAppDB conn) errorOrUnit
+  -- error "initDB not implemented (use Sql.runDBAction to catch exceptions)"
   where
   -- Query has an `IsString` instance so string literals like this can be
   -- converted into a `Query` type when the `OverloadedStrings` language
@@ -74,42 +82,77 @@ getComments
   :: FirstAppDB
   -> Topic
   -> IO (Either Error [Comment])
-getComments =
-  let
-    sql = "SELECT id,topic,comment,time FROM comments WHERE topic = ?"
-  -- There are several possible implementations of this function. Particularly
-  -- there may be a trade-off between deciding to throw an Error if a DBComment
-  -- cannot be converted to a Comment, or simply ignoring any DBComment that is
-  -- not valid.
-  in
-    error "getComments not implemented (use Sql.runDBAction to catch exceptions)"
+getComments (FirstAppDB conn) topic =
+    do
+      let sql = "SELECT id,topic,comment,time FROM comments WHERE topic = ?"
+      dbComments <- Sql.query conn sql (Sql.Only (getTopic topic :: Text)) :: IO [DBComment]
+      let errorOrComments = traverse fromDBComment dbComments
+      pure errorOrComments
+  -- let
+  --   sql = "SELECT id,topic,comment,time FROM comments WHERE topic = ?"
+  -- -- There are several possible implementations of this function. Particularly
+  -- -- there may be a trade-off between deciding to throw an Error if a DBComment
+  -- -- cannot be converted to a Comment, or simply ignoring any DBComment that is
+  -- -- not valid.
+
+  --   dbCommentsIO = Sql.query conn sql (Sql.Only (getTopic topic :: Text)) :: IO [DBComment]
+  --   -- errorOrDbCommentIO = Sql.runDBAction queryIO
+  --   -- Question: How to handle eithers with 2 different error types?
+
+  --   -- Question: Is there a nicer way to do this?
+  --   errorOrCommentsIO = fmap (traverse fromDBComment) dbCommentsIO
+    
+  -- in
+  --   errorOrCommentsIO
 
 addCommentToTopic
   :: FirstAppDB
   -> Topic
   -> CommentText
   -> IO (Either Error ())
-addCommentToTopic =
+addCommentToTopic (FirstAppDB conn) topic commentText =
   let
     sql = "INSERT INTO comments (topic,comment,time) VALUES (?,?,?)"
+    time = "2012-08-20 20:19:58 UTC"
+    insertQuery = Sql.execute conn sql [getTopic topic :: Text, getCommentText commentText :: Text, time :: Text]
+    dbErrorOrUnit = Sql.runDBAction insertQuery
   in
-    error "addCommentToTopic not implemented (use Sql.runDBAction to catch exceptions)"
+    fmap (first DbError) dbErrorOrUnit
 
 getTopics
   :: FirstAppDB
   -> IO (Either Error [Topic])
-getTopics =
+getTopics (FirstAppDB conn) =
   let
     sql = "SELECT DISTINCT topic FROM comments"
+    mkTopicsFromDbString :: [Sql.Only Text] -> Either Error [Topic]
+    mkTopicsFromDbString = traverse (\(Sql.Only t) -> mkTopic t)
+
+    -- IO [Only Text]
+    topicStrings = Sql.query_ conn sql :: IO [Sql.Only Text]
+    -- IO (DatabaseResponse [Only Text])
+    dbErrorOrTopicStrings = Sql.runDBAction topicStrings :: IO (Sql.DatabaseResponse [Sql.Only Text])
+    -- IO (Either Error [Only Text])
+    errorOrTopicStrings :: IO (Either Error [Sql.Only Text])
+    errorOrTopicStrings = fmap (mapLeft DbError) dbErrorOrTopicStrings
+    -- IO (Either Error [Topic])
+    topics = fmap (>>= mkTopicsFromDbString) errorOrTopicStrings
   in
-    error "getTopics not implemented (use Sql.runDBAction to catch exceptions)"
+    fmap (>>= mkTopicsFromDbString) errorOrTopicStrings
+    -- Question: Nicer way to do this?
+
+
+    -- fromOnly
 
 deleteTopic
   :: FirstAppDB
   -> Topic
   -> IO (Either Error ())
-deleteTopic =
+deleteTopic (FirstAppDB conn) topic =
   let
     sql = "DELETE FROM comments WHERE topic = ?"
+    resultIO = Sql.execute conn sql (Sql.Only (getTopic topic :: Text))
+    errorOrResult = Sql.runDBAction resultIO
   in
-    error "deleteTopic not implemented (use Sql.runDBAction to catch exceptions)"
+    fmap (mapLeft DbError) errorOrResult
+

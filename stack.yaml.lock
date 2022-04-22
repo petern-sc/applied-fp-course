@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: waargonaut-0.8.0.1@sha256:9bdd5ffea19952d12890b9b9c4366fdd5cab7fad088531cf6be70b0e7e1b1a60,11560
+    hackage: QuickCheck-2.12.6.1@sha256:ce974f511174fbc3102bccb13d6d45781d327194f0311790b9f8db6a7cb1bab3,6336
     pantry-tree:
-      size: 5706
-      sha256: ad223ea55961bb4fad50a12a7d9bc250dccad7c827e44f649ef8db0d3951798c
+      size: 2046
+      sha256: 1b9bf780a91762f07a63698d656234de0b68f5c8de760cc90153c01888730eb5
   original:
-    hackage: waargonaut-0.8.0.1
+    hackage: QuickCheck-2.12.6.1
 - completed:
     hackage: digit-0.8@sha256:55f600a13c13bfca24820b7556a404fef64ec043f9a4cf5f4586f17365d21c5e,3808
     pantry-tree:
@@ -19,12 +19,26 @@ packages:
   original:
     hackage: digit-0.8
 - completed:
+    hackage: generic-lens-1.2.0.1@sha256:faecffd513340cd570866aa8f3e0e139d3f9240ecd3eb766357cdf47f550004c,6550
+    pantry-tree:
+      size: 4315
+      sha256: ea2099153bc65265915f206f08d25eed0d21270412505ea6470665df74b7f5ec
+  original:
+    hackage: generic-lens-1.2.0.1
+- completed:
     hackage: hoist-error-0.2.1.0@sha256:f238a27a593ec0c9b4f5263adf917b7c3b76daffed2398d7520e43e6515169f2,1221
     pantry-tree:
       size: 281
       sha256: a8fd6aafc02e04b20e9697c27a62472815e3658237cc490deb71b32373305327
   original:
     hackage: hoist-error-0.2.1.0
+- completed:
+    hackage: hspec-2.5.9@sha256:96d9e45f57cad2d61d0e6ed08a0d4fef5fa3504634d9309cac80b101009874b7,1791
+    pantry-tree:
+      size: 594
+      sha256: c48f1c8c834e32023a8cca702fbab95e34ae4a0384b43e5fc9bcc6b6a364e371
+  original:
+    hackage: hspec-2.5.9
 - completed:
     hackage: hspec-core-2.5.9@sha256:ade976f690d4183782c0f19336c35eb8df4c5efc239c8aba96dde1a57414016d,4583
     pantry-tree:
@@ -40,13 +54,6 @@ packages:
   original:
     hackage: hspec-discover-2.5.9
 - completed:
-    hackage: hspec-2.5.9@sha256:96d9e45f57cad2d61d0e6ed08a0d4fef5fa3504634d9309cac80b101009874b7,1791
-    pantry-tree:
-      size: 594
-      sha256: c48f1c8c834e32023a8cca702fbab95e34ae4a0384b43e5fc9bcc6b6a364e371
-  original:
-    hackage: hspec-2.5.9
-- completed:
     hackage: hw-balancedparens-0.3.0.4@sha256:ae6f715763ff154c76160458fbc75885508364885b6a9b5d6b360a064ce5eb8d,6673
     pantry-tree:
       size: 2854
@@ -61,12 +68,33 @@ packages:
   original:
     hackage: hw-json-standard-cursor-0.2.1.2
 - completed:
+    hackage: hw-rankselect-0.13.3.2@sha256:669cd3f09278da2439b98fa21998b5e9dbcdda7bd2d83df04b79c7ae0de5e8c5,9038
+    pantry-tree:
+      size: 3465
+      sha256: 022b6881742fddc2a883473f8636dd9f5b3a3a2ff49a88f17d02526a41410ef6
+  original:
+    hackage: hw-rankselect-0.13.3.2
+- completed:
     hackage: natural-0.3.0.4@sha256:569e38fae5f57aa4f09ab7b3e29982988efe1585af58736688bc4d9bab2dc1ca,2116
     pantry-tree:
       size: 311
       sha256: d9f59b81a01f5107b4291db86ca8a91318b24f124c80f50c78edccc444a5b47f
   original:
     hackage: natural-0.3.0.4
+- completed:
+    hackage: tasty-wai-0.1.1.0@sha256:ab1f3aa2d28821fe991fe3ae0757d3f07a707987a5a7af3d0d74dc599a6a8eff,1920
+    pantry-tree:
+      size: 369
+      sha256: 85c734bc2a263f13408d3c33c7754b0092663096eeb9bbfd7be300aacafb3b8c
+  original:
+    hackage: tasty-wai-0.1.1.0
+- completed:
+    hackage: waargonaut-0.8.0.1@sha256:9bdd5ffea19952d12890b9b9c4366fdd5cab7fad088531cf6be70b0e7e1b1a60,11560
+    pantry-tree:
+      size: 5706
+      sha256: ad223ea55961bb4fad50a12a7d9bc250dccad7c827e44f649ef8db0d3951798c
+  original:
+    hackage: waargonaut-0.8.0.1
 - completed:
     hackage: witherable-0.3.5@sha256:6590a15735b50ac14dcc138d4265ff1585d5f3e9d3047d5ebc5abf4cd5f50084,1476
     pantry-tree:
@@ -81,34 +109,6 @@ packages:
       sha256: e99696bf95da593a3892c7b9a28db09ffd139b4b1b313f32cec9d26979aa7ce2
   original:
     hackage: witherable-class-0
-- completed:
-    hackage: QuickCheck-2.12.6.1@sha256:ce974f511174fbc3102bccb13d6d45781d327194f0311790b9f8db6a7cb1bab3,6336
-    pantry-tree:
-      size: 2046
-      sha256: 1b9bf780a91762f07a63698d656234de0b68f5c8de760cc90153c01888730eb5
-  original:
-    hackage: QuickCheck-2.12.6.1
-- completed:
-    hackage: hw-rankselect-0.13.3.2@sha256:669cd3f09278da2439b98fa21998b5e9dbcdda7bd2d83df04b79c7ae0de5e8c5,9038
-    pantry-tree:
-      size: 3465
-      sha256: 022b6881742fddc2a883473f8636dd9f5b3a3a2ff49a88f17d02526a41410ef6
-  original:
-    hackage: hw-rankselect-0.13.3.2
-- completed:
-    hackage: generic-lens-1.2.0.1@sha256:faecffd513340cd570866aa8f3e0e139d3f9240ecd3eb766357cdf47f550004c,6550
-    pantry-tree:
-      size: 4315
-      sha256: ea2099153bc65265915f206f08d25eed0d21270412505ea6470665df74b7f5ec
-  original:
-    hackage: generic-lens-1.2.0.1
-- completed:
-    hackage: tasty-wai-0.1.1.0@sha256:ab1f3aa2d28821fe991fe3ae0757d3f07a707987a5a7af3d0d74dc599a6a8eff,1920
-    pantry-tree:
-      size: 369
-      sha256: 85c734bc2a263f13408d3c33c7754b0092663096eeb9bbfd7be300aacafb3b8c
-  original:
-    hackage: tasty-wai-0.1.1.0
 snapshots:
 - completed:
     size: 524164

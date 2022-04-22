@@ -23,7 +23,7 @@ import qualified Data.ByteString.Lazy.Char8         as LBS
 import           Data.Either                        (Either (Left, Right),
                                                      either)
 
-import           Data.Semigroup                     ((<>))
+import           Data.Semigroup                     ((<>), First (getFirst))
 import           Data.Text                          (Text)
 import           Data.Text.Encoding                 (decodeUtf8)
 import           Data.Text.Lazy.Encoding            (encodeUtf8)
@@ -33,13 +33,20 @@ import           Database.SQLite.SimpleErrors.Types (SQLiteResponse)
 import           Waargonaut.Encode                  (Encoder')
 import qualified Waargonaut.Encode                  as E
 
-import           Level04.Conf                       (Conf, firstAppConfig)
+import           Level04.Conf                       (Conf (dbFilePath), firstAppConfig)
 import qualified Level04.DB                         as DB
 import           Level04.Types                      (ContentType (JSON, PlainText),
                                                      Error (EmptyCommentText, EmptyTopic, UnknownRoute),
                                                      RqType (AddRq, ListRq, ViewRq),
                                                      mkCommentText, mkTopic,
-                                                     renderContentType)
+                                                     renderContentType, Comment, Topic)
+import Level04.Types.Error (Error(DbError))
+import Level04.DB (initDB, getComments, getTopics, addCommentToTopic)
+import Data.Bifunctor (Bifunctor(first, second))
+import Data.Functor (($>))
+import Level04.Types (encodeComment)
+import Control.Lens.Internal.Coerce (coerce)
+import Level04.Types.Topic ( encodeTopic )
 
 -- Our start-up is becoming more complicated and could fail in new and
 -- interesting ways. But we also want to be able to capture these errors in a
@@ -60,8 +67,11 @@ runApp = error "runApp needs re-implementing"
 --
 prepareAppReqs
   :: IO ( Either StartUpError DB.FirstAppDB )
-prepareAppReqs =
-  error "prepareAppReqs not implemented"
+prepareAppReqs = do
+    let config = firstAppConfig
+    sqlErrorOrDb <- initDB (dbFilePath config)
+    let errorOrDb = first DBInitErr sqlErrorOrDb
+    return errorOrDb
 
 -- | Some helper functions to make our lives a little more DRY.
 mkResponse
@@ -138,12 +148,21 @@ handleRequest
   :: DB.FirstAppDB
   -> RqType
   -> IO (Either Error Response)
-handleRequest _db (AddRq _ _) =
-  (resp200 PlainText "Success" <$) <$> error "AddRq handler not implemented"
-handleRequest _db (ViewRq _)  =
-  error "ViewRq handler not implemented"
-handleRequest _db ListRq      =
-  error "ListRq handler not implemented"
+handleRequest _db (AddRq topic commentText) = do
+  errorOrUnit <- addCommentToTopic _db topic commentText
+  -- resp200 PlainText "Success" <$ errorOrUnit
+  --  let a = (resp200 PlainText "Success" <$ errorOrUnit)
+  return (errorOrUnit $> resp200 PlainText "Success")
+  -- (resp200 PlainText "Success" <$) <$> error "AddRq handler not implemented"
+handleRequest _db (ViewRq topic)  = do
+  errorOrComments <- getComments _db topic
+  let encodeComments = resp200Json (E.list encodeComment) :: [Comment] -> Response
+  return $ second encodeComments errorOrComments
+handleRequest _db ListRq      = do
+  errorOrTopics <- getTopics _db
+  let encodeTopics = resp200Json (E.list encodeTopic)
+
+  return $ second encodeTopics errorOrTopics
 
 mkRequest
   :: Request
@@ -184,6 +203,8 @@ mkErrorResponse
 mkErrorResponse UnknownRoute =
   resp404 PlainText "Unknown Route"
 mkErrorResponse EmptyCommentText =
-  resp400 PlainText "Empty Comment"
+  resp400 PlainText "Empty Comment Text"
 mkErrorResponse EmptyTopic =
   resp400 PlainText "Empty Topic"
+mkErrorResponse (DbError _) =
+  resp500 PlainText "DB error"

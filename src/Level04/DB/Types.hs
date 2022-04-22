@@ -14,7 +14,14 @@ import           Database.SQLite.Simple.FromRow (FromRow (fromRow), field)
 -- Complete in the DBComment type below so it is a record type that matches the
 -- Comment type, but without the newtype wrappers for each value. To get started,
 -- just copy the new definition for the `Comment` type from Level04.Types.
-data DBComment = DBComment
+data DBComment = DBComment 
+  { commendId :: Int
+  , commentTopic :: Text 
+  , commentBody :: Text 
+  , commentTime :: UTCTime 
+  }
+  deriving Show
+
   -- NB: Haskell does not allow duplicate field names for records so the field
   -- names for this type will have to be slightly different
 
@@ -23,6 +30,6 @@ data DBComment = DBComment
 -- type. This technique of translating a result row to a type will differ
 -- between different packages/databases.
 instance FromRow DBComment where
-  fromRow = error "FromRow DBComment instance not implemented"
+  fromRow = DBComment <$> field <*> field <*> field <*> field
 
 -- Now move to ``src/Level04/Types.hs``

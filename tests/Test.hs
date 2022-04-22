@@ -44,16 +44,22 @@ import           Network.HTTP.Types as HTTP
 -- | This import is provided for you so you can check your work from Level02. As
 -- you move forward, come back and import your latest 'Application' so that you
 -- can test your work as you progress.
-import qualified Level02.Core       as Core
+import qualified Level04.Core       as Core
+import Level04.DB (FirstAppDB(FirstAppDB))
+import Database.SQLite.Simple
 
 main :: IO ()
-main = defaultMain $ testGroup "Applied FP Course - Tests"
+main = do
+    let firstAppDb = fmap FirstAppDB (open ":memory:")
+    coreApp <- fmap Core.app firstAppDb
+    defaultMain $ testGroup "Applied FP Course - Tests"
+      [ testWai coreApp "List Topics" $
+          get "fudge/view" >>= assertStatus' HTTP.status200
 
-  [ testWai Core.app "List Topics" $
-      get "fudge/view" >>= assertStatus' HTTP.status200
+      , testWai coreApp "Empty Input" $ do
+          resp <- post "fudge/add" ""
+          assertStatus' HTTP.status400 resp
+          assertBody "Empty Comment Text" resp
+      ]
 
-  , testWai Core.app "Empty Input" $ do
-      resp <- post "fudge/add" ""
-      assertStatus' HTTP.status400 resp
-      assertBody "Empty Comment Text" resp
-  ]
+-- How to test when type is IO Application
