@@ -50,8 +50,11 @@ import Database.SQLite.Simple
 
 main :: IO ()
 main = do
-    let firstAppDb = fmap FirstAppDB (open ":memory:")
-    coreApp <- fmap Core.app firstAppDb
+    conn <- open ":memory:"
+    execute_  conn "CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY, topic TEXT, comment TEXT, time TEXT)"
+
+    let firstAppDb = FirstAppDB conn
+    let coreApp = Core.app firstAppDb
     defaultMain $ testGroup "Applied FP Course - Tests"
       [ testWai coreApp "List Topics" $
           get "fudge/view" >>= assertStatus' HTTP.status200

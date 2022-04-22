@@ -55,8 +55,12 @@ data StartUpError
   = DBInitErr SQLiteResponse
   deriving Show
 
+-- Question
 runApp :: IO ()
-runApp = error "runApp needs re-implementing"
+runApp = do
+  errorOrFirstAppDb <- prepareAppReqs
+  let errorOrApp = fmap app errorOrFirstAppDb
+  undefined
 
 -- We need to complete the following steps to prepare our app requirements:
 --
