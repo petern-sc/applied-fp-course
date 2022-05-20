@@ -2,7 +2,8 @@
 {-# LANGUAGE InstanceSigs          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 module Level05.AppM
-  ( AppM
+-- Question: Is (..) wildcard export? (..)
+  ( AppM(..)
   , liftEither
   , runAppM
   ) where
@@ -15,6 +16,8 @@ import           Data.Text              (Text)
 import           Level05.Types          (Error)
 
 import           Data.Bifunctor         (first)
+import           Data.Either                        (Either (Left, Right),
+                                                     either)
 
 -- We're going to add a very useful abstraction to our application. We'll
 -- automate away the explicit error handling and inspection of our Either values
@@ -72,29 +75,64 @@ runAppM (AppM m) =
 
 instance Functor AppM where
   fmap :: (a -> b) -> AppM a -> AppM b
-  fmap = error "fmap for AppM not implemented"
+  -- fmap fn (AppM (IO (Right a'))) = do
+  fmap fn (AppM ioA) =
+    let
+      b' = fmap (fmap fn) ioA
+    in AppM b'
+  -- fmap _ (AppM (IO (Left e))) = AppM (pure (Left e))
+  -- fmap _ (AppM (IO e@(Left _))) = AppM (pure e)
 
 instance Applicative AppM where
   pure :: a -> AppM a
-  pure  = error "pure for AppM not implemented"
+  pure a = AppM (pure (Right a))
+  -- pure = AppM . (pure . Right)
 
   (<*>) :: AppM (a -> b) -> AppM a -> AppM b
-  (<*>) = error "spaceship for AppM not implemented"
+  (<*>) (AppM ioFn) (AppM ioA) = let
+      b' = do
+        fn <- ioFn
+        a' <- ioA
+        let errorOrb' = fn <*> a'
+        return errorOrb'
+    in AppM b'
 
 instance Monad AppM where
   (>>=) :: AppM a -> (a -> AppM b) -> AppM b
-  (>>=)  = error "bind for AppM not implemented"
+  (>>=) (AppM ioEitherA) fn =
+    let
+      ioEitherB = do
+        eitherA <- ioEitherA -- eitherA :: Either[Error, A]
+        let eitherB' = fmap fn eitherA -- b' :: Either[Error, AppM[B]] 
+        case eitherB' of
+          (Left value) -> pure (Left value) -- IO[Left[B]]
+          (Right (AppM io)) -> io -- IO[ErrorOr[b]]
+    in AppM ioEitherB
+
+  -- question about pure
+      -- b' = fmap (fmap fn) ioA  
+  -- (>>=) (AppM(IO (Right a'))) fn = fn a'
+  -- (>>=) (AppM(IO (Left e))) _ = AppM(pure (Left e))
+  -- (>>=) a' fn =
+  --   let fa = _ fn -- :: AppM(a -> b)
+  --   in fa <*> a'
 
 instance MonadIO AppM where
   liftIO :: IO a -> AppM a
-  liftIO = error "liftIO for AppM not implemented"
+  liftIO = AppM . fmap Right
 
 instance MonadError Error AppM where
   throwError :: Error -> AppM a
-  throwError = error "throwError for AppM not implemented"
+  -- throwError e = AppM (fail $ show e)
+  throwError e = AppM (pure (Left e))
 
   catchError :: AppM a -> (Error -> AppM a) -> AppM a
-  catchError = error "catchError for AppM not implemented"
+  catchError (AppM ioA) recoverFn =
+    let
+      eitherAToAppM = either recoverFn (AppM . pure . Right) -- :: Either Error a -> AppM a
+      ioAppMA = fmap eitherAToAppM ioA -- IO (AppM a)
+      ioA' = ioAppMA >>= (\(AppM x) -> x) -- IO (Either Error a)
+    in AppM ioA'
 
 -- This is a helper function that will `lift` an Either value into our new AppM
 -- by applying `throwError` to the Left value, and using `pure` to lift the
@@ -106,7 +144,8 @@ instance MonadError Error AppM where
 liftEither
   :: Either Error a
   -> AppM a
-liftEither =
-  error "liftEither not implemented"
+liftEither = either throwError pure
+-- liftEither errorOrA = AppM $ pure errorOrA 
+-- Question: Why throw?
 
 -- Go to 'src/Level05/DB.hs' next.

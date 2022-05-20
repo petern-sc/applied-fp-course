@@ -97,9 +97,7 @@ getComments (FirstAppDB conn) topic =
 
   --   dbCommentsIO = Sql.query conn sql (Sql.Only (getTopic topic :: Text)) :: IO [DBComment]
   --   -- errorOrDbCommentIO = Sql.runDBAction queryIO
-  --   -- Question: How to handle eithers with 2 different error types?
 
-  --   -- Question: Is there a nicer way to do this?
   --   errorOrCommentsIO = fmap (traverse fromDBComment) dbCommentsIO
     
   -- in
@@ -139,8 +137,6 @@ getTopics (FirstAppDB conn) =
     topics = fmap (>>= mkTopicsFromDbString) errorOrTopicStrings
   in
     fmap (>>= mkTopicsFromDbString) errorOrTopicStrings
-    -- Question: Nicer way to do this?
-
 
     -- fromOnly
 

@@ -42,6 +42,10 @@ import           Level05.Types                      (ContentType (..),
                                                      encodeComment, encodeTopic,
                                                      mkCommentText, mkTopic,
                                                      renderContentType)
+import Level05.Conf
+import Level05.DB (initDB)
+import Data.Either.Combinators (mapLeft, mapBoth)
+import Data.Bifoldable (Bifoldable(bifoldMap))
 
 -- Our start-up is becoming more complicated and could fail in new and
 -- interesting ways. But we also want to be able to capture these errors in a
@@ -58,7 +62,7 @@ runApp = do
   case cfgE of
     Left err   ->
       -- We can't run our app at all! Display the message and exit the application.
-      undefined
+      ioError (userError (show err))
     Right cfg ->
       -- We have a valid config! We can now complete the various pieces needed to run our
       -- application. This function 'finally' will execute the first 'IO a', and then, even in the
@@ -76,7 +80,10 @@ runApp = do
 prepareAppReqs
   :: IO ( Either StartUpError DB.FirstAppDB )
 prepareAppReqs =
-  error "copy your prepareAppReqs from the previous level."
+    do
+      let filepath = dbFilePath firstAppConfig
+      sqlErrorOrDb <- initDB filepath
+      pure $ mapLeft DBInitErr sqlErrorOrDb
 
 -- | Some helper functions to make our lives a little more DRY.
 mkResponse
@@ -131,7 +138,18 @@ app
   :: DB.FirstAppDB
   -> Application
 app db rq cb =
-  error "app not reimplemented"
+  do
+    errorOrResponse <- runAppM appMResponse
+    response <- case errorOrResponse of
+     Left e -> pure $ mkErrorResponse e
+     Right value -> pure value
+    -- let response = bifoldMap mkErrorResponse id errorOrResponse
+    cb response
+  where
+    appMResponse = do
+      request <- mkRequest rq
+      handleRequest db request
+-- Question: Is there a convenience method to lift either into IO?  
 
 handleRequest
   :: DB.FirstAppDB

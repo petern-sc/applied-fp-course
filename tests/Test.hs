@@ -44,25 +44,42 @@ import           Network.HTTP.Types as HTTP
 -- | This import is provided for you so you can check your work from Level02. As
 -- you move forward, come back and import your latest 'Application' so that you
 -- can test your work as you progress.
-import qualified Level04.Core       as Core
-import Level04.DB (FirstAppDB(FirstAppDB))
+import qualified Level05.Core       as Core
+import Level05.DB (FirstAppDB(FirstAppDB))
+import Level05.Types.Topic (Topic(Topic))
 import Database.SQLite.Simple
+import Data.Text (pack)
 
 main :: IO ()
 main = do
     conn <- open ":memory:"
     execute_  conn "CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY, topic TEXT, comment TEXT, time TEXT)"
 
-    let firstAppDb = FirstAppDB conn
-    let coreApp = Core.app firstAppDb
+    let db = FirstAppDB conn
+    let coreApp = Core.app db
+    
     defaultMain $ testGroup "Applied FP Course - Tests"
-      [ testWai coreApp "List Topics" $
+      [ testWai coreApp "View Topics" $
           get "fudge/view" >>= assertStatus' HTTP.status200
+          
+      , testWai coreApp "List Topics" $ do
+          _ <- post "fudge/add" "foo"
+          resp <- get "list"
+          assertStatus' HTTP.status200 resp
+        --   assertBody "[fudge]" resp
 
-      , testWai coreApp "Empty Input" $ do
+      , testWai coreApp "Add comment" $ do
+          resp <- post "fudge/add" "foo"
+          assertStatus' HTTP.status200 resp
+          assertBody "Success" resp
+
+      , testWai coreApp "Add empty comment" $ do
           resp <- post "fudge/add" ""
           assertStatus' HTTP.status400 resp
-          assertBody "Empty Comment Text" resp
+          assertBody "Empty Comment" resp
+      
+      , testWai coreApp "Unknown route" $ do
+          resp <- post "fudge" ""
+          assertStatus' HTTP.status404 resp
+          assertBody "Unknown Route" resp          
       ]
-
--- How to test when type is IO Application
